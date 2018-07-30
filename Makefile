@@ -19,10 +19,12 @@ GTEST_DIR = /tmp/googletest/googletest
 # Where to find user code.
 USER_DIR = src
 
+LIB_DIR = lib64
+
 # Flags passed to the preprocessor.
 # Set Google Test's header directory as a system directory, such that
 # the compiler doesn't generate warnings in Google Test headers.
-CPPFLAGS += -isystem $(GTEST_DIR)/include
+CPPFLAGS += -isystem include
 
 # Flags passed to the C++ compiler.
 CXXFLAGS += -g -Wall -Wextra -pthread
@@ -33,15 +35,15 @@ TESTS = sample1_unittest
 
 # All Google Test headers.  Usually you shouldn't change this
 # definition.
-GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h \
-                $(GTEST_DIR)/include/gtest/internal/*.h
+GTEST_HEADERS = include/gtest/*.h \
+                include/gtest/internal/*.h
 
 # House-keeping build targets.
 
 all : $(TESTS)
 
 clean :
-	rm -rf $(TESTS) gtest.a gtest_main.a *.o lib64
+	rm -rf $(TESTS) gtest.a gtest_main.a *.o $(LIB_DIR) include
 
 # Builds gtest.a and gtest_main.a.
 
@@ -49,23 +51,29 @@ clean :
 # trailing _.
 GTEST_SRCS_ = $(GTEST_DIR)/src/*.cc $(GTEST_DIR)/src/*.h $(GTEST_HEADERS)
 
+$(GTEST_HEADERS):
+	cp -r $(GTEST_DIR)/include .
+
 # For simplicity and to avoid depending on Google Test's
 # implementation details, the dependencies specified below are
 # conservative and not optimized.  This is fine as Google Test
 # compiles fast and for ordinary users its source rarely changes.
-gtest-all.o : $(GTEST_SRCS_)
+$(LIB_DIR)/gtest-all.o : $(GTEST_SRCS_)
+	mkdir -p $(LIB_DIR)
 	$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c \
-            $(GTEST_DIR)/src/gtest-all.cc
+            $(GTEST_DIR)/src/gtest-all.cc -o $@
 
-gtest_main.o : $(GTEST_SRCS_)
+$(LIB_DIR)/gtest_main.o : $(GTEST_SRCS_)
+	mkdir -p $(LIB_DIR)
 	$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c \
-            $(GTEST_DIR)/src/gtest_main.cc
+            $(GTEST_DIR)/src/gtest_main.cc -o $@
 
-gtest.a : gtest-all.o
+$(LIB_DIR)/gtest.a : $(LIB_DIR)/gtest-all.o
+	mkdir -p $(LIB_DIR)
 	$(AR) $(ARFLAGS) $@ $^
 
-lib64/libgtest_main.a : gtest-all.o gtest_main.o
-	mkdir -p lib64
+$(LIB_DIR)/libgtest_main.a : $(LIB_DIR)/gtest-all.o $(LIB_DIR)/gtest_main.o
+	mkdir -p $(LIB_DIR)
 	$(AR) $(ARFLAGS) $@ $^
 
 # Builds a sample test.  A test should link with either gtest.a or
@@ -79,5 +87,5 @@ sample1_unittest.o : $(USER_DIR)/sample1_unittest.cc \
                      $(USER_DIR)/sample1.h $(GTEST_HEADERS)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/sample1_unittest.cc
 
-sample1_unittest : sample1.o sample1_unittest.o lib64/libgtest_main.a
+sample1_unittest : sample1.o sample1_unittest.o $(LIB_DIR)/libgtest_main.a
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
