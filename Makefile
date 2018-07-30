@@ -32,7 +32,7 @@ CXXFLAGS += -g -Wall -Wextra -pthread
 
 # All tests produced by this Makefile.  Remember to add new tests you
 # created to the list.
-TESTS = test1 test2
+TESTS = test1 test2 test3
 
 # All Google Test headers.  Usually you shouldn't change this
 # definition.
@@ -80,6 +80,9 @@ $(LIB_DIR_1)/libgtest_main.a : $(LIB_DIR_1)/gtest-all.o $(LIB_DIR_1)/gtest_main.
 $(LIB_DIR_2)/libgtest_main.a : install-googletest.sh
 	./install-googletest.sh
 
+$(LIB_DIR_2)/libgtest.a : install-googletest.sh
+	./install-googletest.sh
+
 # Builds a sample test.  A test should link with either gtest.a or
 # gtest_main.a, depending on whether it defines its own main()
 # function.
@@ -95,3 +98,10 @@ $(USER_DIR)/test2.o : $(USER_DIR)/test.cpp $(GTEST_HEADERS)
 
 test2 : $(USER_DIR)/test2.o $(LIB_DIR_2)/libgtest_main.a
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
+
+$(USER_DIR)/test_main.o : $(USER_DIR)/test_main.cpp $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
+
+test3 : $(USER_DIR)/test2.o $(USER_DIR)/test_main.o $(LIB_DIR_2)/libgtest.a
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
+
