@@ -19,7 +19,8 @@ GTEST_DIR = /tmp/googletest/googletest
 # Where to find user code.
 USER_DIR = src
 
-LIB_DIR = lib64
+LIB_DIR_1 = manual-lib
+LIB_DIR_2 = lib64
 
 # Flags passed to the preprocessor.
 # Set Google Test's header directory as a system directory, such that
@@ -31,7 +32,7 @@ CXXFLAGS += -g -Wall -Wextra -pthread
 
 # All tests produced by this Makefile.  Remember to add new tests you
 # created to the list.
-TESTS = sample1_unittest
+TESTS = test1 test2
 
 # All Google Test headers.  Usually you shouldn't change this
 # definition.
@@ -43,7 +44,7 @@ GTEST_HEADERS = include/gtest/*.h \
 all : $(TESTS)
 
 clean :
-	rm -rf $(TESTS) **/*.a **/*.o $(LIB_DIR) include
+	rm -rf $(TESTS) **/*.a **/*.o $(LIB_DIR_1) include $(LIB_DIR_2)
 
 # Builds gtest.a and gtest_main.a.
 
@@ -58,31 +59,39 @@ $(GTEST_HEADERS):
 # implementation details, the dependencies specified below are
 # conservative and not optimized.  This is fine as Google Test
 # compiles fast and for ordinary users its source rarely changes.
-$(LIB_DIR)/gtest-all.o : $(GTEST_SRCS_)
-	mkdir -p $(LIB_DIR)
+$(LIB_DIR_1)/gtest-all.o : $(GTEST_SRCS_)
+	mkdir -p $(LIB_DIR_1)
 	$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c \
             $(GTEST_DIR)/src/gtest-all.cc -o $@
 
-$(LIB_DIR)/gtest_main.o : $(GTEST_SRCS_)
-	mkdir -p $(LIB_DIR)
+$(LIB_DIR_1)/gtest_main.o : $(GTEST_SRCS_)
+	mkdir -p $(LIB_DIR_1)
 	$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c \
             $(GTEST_DIR)/src/gtest_main.cc -o $@
 
-$(LIB_DIR)/gtest.a : $(LIB_DIR)/gtest-all.o
-	mkdir -p $(LIB_DIR)
+$(LIB_DIR_1)/gtest.a : $(LIB_DIR_1)/gtest-all.o
+	mkdir -p $(LIB_DIR_1)
 	$(AR) $(ARFLAGS) $@ $^
 
-$(LIB_DIR)/libgtest_main.a : $(LIB_DIR)/gtest-all.o $(LIB_DIR)/gtest_main.o
-	mkdir -p $(LIB_DIR)
+$(LIB_DIR_1)/libgtest_main.a : $(LIB_DIR_1)/gtest-all.o $(LIB_DIR_1)/gtest_main.o
+	mkdir -p $(LIB_DIR_1)
 	$(AR) $(ARFLAGS) $@ $^
+
+$(LIB_DIR_2)/libgtest_main.a : install-googletest.sh
+	./install-googletest.sh
 
 # Builds a sample test.  A test should link with either gtest.a or
 # gtest_main.a, depending on whether it defines its own main()
 # function.
 
-$(USER_DIR)/test.o : $(USER_DIR)/test.cpp $(GTEST_HEADERS)
+$(USER_DIR)/test1.o : $(USER_DIR)/test.cpp $(GTEST_HEADERS)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
-test : $(USER_DIR)/test.o $(LIB_DIR)/libgtest_main.a
+test1 : $(USER_DIR)/test1.o $(LIB_DIR_1)/libgtest_main.a
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
 
+$(USER_DIR)/test2.o : $(USER_DIR)/test.cpp $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
+
+test2 : $(USER_DIR)/test2.o $(LIB_DIR_2)/libgtest_main.a
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
