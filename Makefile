@@ -80,13 +80,9 @@ $(LIB_DIR)/libgtest_main.a : $(LIB_DIR)/gtest-all.o $(LIB_DIR)/gtest_main.o
 # gtest_main.a, depending on whether it defines its own main()
 # function.
 
-$(USER_DIR)/sample1.o : $(USER_DIR)/sample1.cc $(USER_DIR)/sample1.h $(GTEST_HEADERS)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/sample1.cc -o $@
+$(USER_DIR)/test.o : $(USER_DIR)/test.cpp $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
-$(USER_DIR)/sample1_unittest.o : $(USER_DIR)/sample1_unittest.cc \
-                     $(USER_DIR)/sample1.h $(GTEST_HEADERS)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/sample1_unittest.cc -o $@
-
-sample1_unittest : $(USER_DIR)/sample1.o $(USER_DIR)/sample1_unittest.o $(LIB_DIR)/libgtest_main.a
+test : $(USER_DIR)/test.o $(LIB_DIR)/libgtest_main.a
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
 
